@@ -223,7 +223,11 @@ topten(){
 	register flg = 0;
 	extern char *getdate();
 #define	HUP	if(!done_hup)
+#ifdef MSDOS
+	while(rename(recfile, reclock) == -1) {
+#else
 	while(link(recfile, reclock) == -1) {
+#endif
 		HUP perror(reclock);
 		if(!sleepct--) {
 			HUP puts("I give up. Sorry.");

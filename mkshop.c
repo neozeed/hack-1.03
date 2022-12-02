@@ -1,6 +1,8 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* hack.mkshop.c - version 1.0.3 */
 
+#include <stdio.h>
+#include <stdlib.h>
 #ifndef QUEST
 #include "hack.h"
 #include "mkroom.h"
@@ -58,8 +60,7 @@ gottype:
 			continue;
 		if(
 #ifdef WIZARD
-		   //(wizard && getenv("SHOPTYPE") && sroom->doorct != 0) ||
-		   (wizard && sroom->doorct != 0) ||
+		   (wizard && getenv("SHOPTYPE") && sroom->doorct != 0) ||
 #endif WIZARD
 			sroom->doorct == 1) break;
 	}

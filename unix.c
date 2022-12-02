@@ -185,7 +185,11 @@ getlock()
 	(void) fflush(stdout);
 
 	/* we ignore QUIT and INT at this point */
+#ifdef MSDOS	/*pc really*/
+	if (rename(HLOCK, LLOCK) == -1) {
+#else
 	if (link(HLOCK, LLOCK) == -1) {
+#endif
 		register int errnosv = errno;
 
 		perror(HLOCK);

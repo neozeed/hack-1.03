@@ -15,16 +15,16 @@ extern struct trap *maketrap();
 #define	XLIM	4	/* define minimum required space around a room */
 #define	YLIM	3
 boolean secret;		/* TRUE while making a vault: increase [XY]LIM */
-//struct mkroom rooms[MAXNROFROOMS+1]; 		in decl.c?
+extern struct mkroom rooms[MAXNROFROOMS+1]; 		/*in decl.c?	*/
 int smeq[MAXNROFROOMS+1];
-//coord doors[DOORMAX];				in decl.c?
+extern coord doors[DOORMAX];					/*in decl.c?	*/
 int doorindex;
 struct rm zerorm;
 int comp();
 schar nxcor;
 boolean goldseen;
 int nroom;
-//xchar xdnstair,xupstair,ydnstair,yupstair; 	in decl.c
+extern xchar xdnstair,xupstair,ydnstair,yupstair; 	/*in decl.c		*/
 
 /* Definitions used by makerooms() and addrs() */
 #define	MAXRS	50	/* max lth of temp rectangle table - arbitrary */
