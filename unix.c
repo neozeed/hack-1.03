@@ -179,6 +179,9 @@ veryold(fd) {
 
 getlock()
 {
+#ifdef MULTIUSER_LOCK
+	return;
+#else
 	extern int errno, hackpid, locknum;
 	register int i = 0, fd;
 
@@ -249,6 +252,7 @@ gotlock:
 			error("cannot close lock");
 		}
 	}
+#endif
 }	
 
 #ifdef MAIL

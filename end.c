@@ -223,6 +223,7 @@ topten(){
 	register flg = 0;
 	extern char *getdate();
 #define	HUP	if(!done_hup)
+#if MULTIUSER_LOCK
 #ifdef MSDOS
 	while(rename(recfile, reclock) == -1) {
 #else
@@ -239,6 +240,7 @@ topten(){
 		HUP (void) fflush(stdout);
 		sleep(1);
 	}
+#endif	//MULTIUSER_LOCK
 	if(!(rfile = fopen(recfile,"r"))){
 		HUP puts("Cannot open record file!");
 		goto unlock;

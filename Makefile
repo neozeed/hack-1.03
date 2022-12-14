@@ -8,6 +8,8 @@ TERMLIB = -lcurses #-ltermlib
 # make hack
 GAME = hack
 GAMEDIR = /usr/games/lib/hackdir
+# -DMULTIUSER_LOCK for systems that can respect this old locking schema
+#
 CFLAGS = -fgnu89-inline -g -O0
 HACKCSRC = decl.c\
 	apply.c bones.c c cmd.c do.c\
@@ -98,7 +100,7 @@ install:
 #	cp 6 /usr/man/man6
 
 clean:
-	rm -f *.o makedefs onames.h h
+	rm -f *.o makedefs onames.h h hack
 
 
 depend:
