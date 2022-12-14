@@ -1,3 +1,4 @@
+/*	SCCS Id: @(#)rip.c	1.3	87/07/14
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* hack.rip.c - version 1.0.2 */
 
@@ -6,7 +7,7 @@
 
 extern char plname[];
 
-char *rip[] = {
+static const char *rip_txt[] = {
 "                       ----------",
 "                      /          \\",
 "                     /    REST    \\",
@@ -24,11 +25,20 @@ char *rip[] = {
 0
 };
 
+static char **rip;
+
 outrip(){
 	register char **dp = rip;
 	register char *dpx;
 	char buf[BUFSZ];
 	register x,y;
+
+        rip = dp = (char **) alloc(sizeof(rip_txt));
+        for (x = 0; rip_txt[x]; x++) {
+                dp[x] = (char *) alloc((unsigned int)(strlen(rip_txt[x]) + 1));
+                strcpy(dp[x], rip_txt[x]);
+        }
+        dp[x] = (char *)0;
 
 	cls();
 	(void) strcpy(buf, plname);
