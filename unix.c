@@ -128,7 +128,7 @@ char filename[MAXPATHLEN+1];
 			break;
 		path = np + 1;
 	}
-	error("gethdate: Cannot get status of %s/%s.",filename,
+	error("gethdate: Cannot get status of [%s]/[%s].",filename,
 		(np = rindex(name, '/')) ? np+1 : name);
 }
 

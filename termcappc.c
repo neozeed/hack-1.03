@@ -27,24 +27,6 @@ startup()
 
 	tptr = (char *) alloc(1024);
 
-#if 0
-	tbufptr = tbuf;
-	if(!(term = getenv("TERM")))
-		error("Can't get TERM.");
-	if(!strncmp(term, "5620", 4))
-		flags.nonull = 1;	/* this should be a termcap flag */
-	if(tgetent(tptr, term) < 1)
-		error("Unknown terminal type: %s.", term);
-	if(pc = tgetstr("pc", &tbufptr))
-		PC = *pc;
-	if(!(BC = tgetstr("bc", &tbufptr))) {	
-		if(!tgetflag("bs"))
-			error("Terminal must backspace.");
-		BC = tbufptr;
-		tbufptr += 2;
-		*BC = '\b';
-	}
-#endif
 /*
 mono|ANSI.SYS mono:\
         :co#80:li#25:bs:pt:bl=^G:le=^H:do=^J:\
@@ -55,36 +37,54 @@ mono|ANSI.SYS mono:\
         :so=\E[1m:se=\E[m:us=\E[4m:ue=\E[m:\
         :mb=\E[5m:md=\E[1m:mr=\E[7m:me=\E[m:
 */
-	HO = "\E[H";
-	CO = 80;
-	LI = 25;
+//#define \\E \\033
+	HO = "\033[H";				//	String to position cursor at upper left corner.
+	CO = 80;					//	Numeric value, the width of the screen in character positions. Even hardcopy terminals normally have a `co' capability.
+	LI = 25;					//	Numeric value, the height of the screen in lines.
 	if(CO < COLNO || LI < ROWNO+2)
 		setclipped();
-	CL = "\E[H\E[2J";
-	ND = "\E[C";
-	CE = "\E[K";
-	UP = "\E[A";
-	XD = "";
-	CM = "\E[%i%d";
-	SO = "\E[1m";
-	SE = "\E[m";
-	SG = "";
+	CL = "\033[H\033[2J";			//	String of commands to clear the entire screen and position the cursor at the upper left corner.
+	CE = "\033[K";				//	String of commands to clear from the cursor to the end of the current line.
+
+	ND = "\033[C";				//	String to move the cursor right one column.
+	UP = "\033[A";				//	up String to move the cursor vertically up one line.
+							//	UP String to move cursor vertically up n lines.
+	BC = "";					//	Very obsolete alternative name for the `le' capability.
+							//	le String to move the cursor left one column.
+							//	LE String to move cursor left n columns.
+	XD = "";					//	It seems that xd is no longer supported, and we should use
+     							//    a linefeed instead; unfortunately this requires resetting
+							//    CRMOD, and many output routines will have to be modified
+ 							//    slightly. Let's leave that till the next release. */
+	CM = "\033[0";				//	String of commands to position the cursor at line l, column c. Both parameters are origin-zero, and are defined
+							//	relative to the screen, not relative to display memory. All display terminals except a few very obsolete ones 
+							//	support `cm', so it is acceptable for an application program to refuse to operate on terminals lacking `cm'.
+	SO = "\033[1m";				//	String of commands to enter standout mode.
+	SE = "\033[m";				//	String of commands to leave standout mode.
+	SG = "";					//	Numeric capability, the width on the screen of the magic cookie. This capability is absent in terminals that 
+							//	record appearance modes character by character.
+	TI = "\033[0m\033[=7l";			//	term init
+	TE = "\033[0m\033[=7h";			//	term end
 	if(!SO || !SE || (SG > 0)) SO = SE = 0;
-	CD = "";
+	CD = "";					//	String to clear the line the cursor is on, and following lines.
 	set_whole_screen();		/* uses LI and CD */
 	free(tptr);
 }
 
 start_screen()
 {
-	xputs(TI);
-	xputs(VS);
+	xputs(TI);	//\E[0m\E[=7l		String of commands to put the terminal into whatever special modes are needed 
+			//				or appropriate for programs that move the cursor nonsequentially around the screen. 
+			//				Programs that use termcap to do full-screen display should output this string when they start up.
+	xputs(VS);	//String of commands to enhance the cursor.
 }
 
 end_screen()
 {
-	xputs(VE);
-	xputs(TE);
+	xputs(VE);	//String of commands to return the cursor to normal.
+	xputs(TE);	//\E[0m\E[=7h		String of commands to undo what is done by the `ti' string. Programs that output 
+			//				the `ti' string on entry should output this string when they exit.
+
 }
 
 /* Cursor movements */
@@ -161,7 +161,10 @@ nocmov(x, y)
 cmov(x, y)
 register x, y;
 {
-	xputs(tgoto(CM, x-1, y-1));
+	//xputs(tgoto(CM, x-1, y-1));
+	char cmovs[10];
+	sprintf(cmovs,"%c[%d;%df",0x1B,y-1,x-1);
+	xputs(cmovs);
 	cury = y;
 	curx = x;
 }
@@ -170,8 +173,15 @@ xputc(c) char c; {
 	(void) fputc(c, stdout);
 }
 
+
+/*	The tputs routine applies padding information to the string str and outputs it. The str must be a terminfo string variable
+	or the return value from tparm, tgetstr, or tgoto. affcnt is the number of lines affected, or 1 if not applicable. 
+	putc is a putchar-like routine to which the characters are passed, one at a time.
+*/
+
 xputs(s) char *s; {
 	tputs(s, 1, xputc);
+//puts(s);
 }
 
 cl_end() {
@@ -208,12 +218,14 @@ home()
 
 standoutbeg()
 {
-	if(SO) xputs(SO);
+	if(SO)
+		xputs(SO);
 }
 
 standoutend()
 {
-	if(SE) xputs(SE);
+	if(SE)
+		xputs(SE);
 }
 
 backsp()

@@ -6,68 +6,16 @@
 #include <stdio.h>
 #include "hack.h"
 
-#ifdef MSDOS
 static char erase_char, kill_char;
 static boolean settty_needed = FALSE;
-#else MSDOS
-/*
- * The distinctions here are not BSD - rest but rather USG - rest, as
- * BSD still has the old sgttyb structure, but SYSV has termio. Thus:
- */
-#ifdef BSD
-#define	V7
-#else
-#define USG
-#endif BSD
 
 /*
  * Some systems may have getchar() return EOF for various reasons, and
  * we should not quit before seeing at least NR_OF_EOFS consecutive EOFs.
  */
-#ifndef BSD
 #define	NR_OF_EOFS	20
-#endif BSD
 
 
-#ifdef USG
-
-#include	<termio.h>
-#define termstruct	termio
-#define kill_sym	c_cc[VKILL]
-#define erase_sym	c_cc[VERASE]
-#define EXTABS		TAB3
-#define tabflgs		c_oflag
-#define echoflgs	c_lflag
-#define cbrkflgs	c_lflag
-#define CBRKMASK	ICANON
-#define CBRKON		! /* reverse condition */
-#define OSPEED(x)	((x).c_cflag & CBAUD)
-#define GTTY(x)		(ioctl(0, TCGETA, x))
-#define STTY(x)		(ioctl(0, TCSETA, x))	/* TCSETAF? TCSETAW? */
-
-#else	/* V7 */
-
-#include	<sgtty.h>
-#define termstruct	sgttyb
-#define	kill_sym	sg_kill
-#define	erase_sym	sg_erase
-#define EXTABS		XTABS
-#define tabflgs		sg_flags
-#define echoflgs	sg_flags
-#define cbrkflgs	sg_flags
-#define CBRKMASK	CBREAK
-#define CBRKON		/* empty */
-#define OSPEED(x)	(x).sg_ospeed
-#define GTTY(x)		(gtty(0, x))
-#define STTY(x)		(stty(0, x))
-
-#endif USG
-
-extern short ospeed;
-static char erase_char, kill_char;
-static boolean settty_needed = FALSE;
-struct termstruct inittyb, curttyb;
-#endif MSDOS
 
 /*
  * Get initial state of terminal, set ospeed (for termcap routines)
@@ -75,24 +23,8 @@ struct termstruct inittyb, curttyb;
  * Called by startup() in termcap.c and after returning from ! or ^Z
  */
 gettty(){
-#ifdef MSDOS
 	erase_char = '\b';
 	kill_char = 21;		/* cntl-U */
-#else
-	if(GTTY(&inittyb) < 0)
-		perror("Hack (gettty)");
-	curttyb = inittyb;
-	ospeed = OSPEED(inittyb);
-	erase_char = inittyb.erase_sym;
-	kill_char = inittyb.kill_sym;
-	getioctls();
-
-	/* do not expand tabs - they might be needed inside a cm sequence */
-	if(curttyb.tabflgs & EXTABS) {
-		curttyb.tabflgs &= ~EXTABS;
-		setctty();
-	}
-#endif MSDOS
 	settty_needed = TRUE;
 }
 
@@ -100,58 +32,21 @@ gettty(){
 settty(s) char *s; {
 	end_screen();
 	clear_screen();
-	if(s) printf(s);
-	(void) fflush(stdout);
-#ifdef	MSDOS
+	if(s)
+	   printf(s);
+	fflush(stdout);
+
 	flags.echo = ON;
 	flags.cbreak = OFF;
-#else
-	if(STTY(&inittyb) < 0)
-		perror("Hack (settty)");
-	flags.echo = (inittyb.echoflgs & ECHO) ? ON : OFF;
-	flags.cbreak = (CBRKON(inittyb.cbrkflgs & CBRKMASK)) ? ON : OFF;
-	setioctls();
-#endif MSDOS
 }
 
 setctty(){
-#ifndef MSDOS
-	if(STTY(&curttyb) < 0)
-		perror("Hack (setctty)");
-#endif MSDOS
 }
 
 
 setftty(){
-#ifdef MSDOS
 	flags.cbreak = ON;
 	flags.echo = OFF;
-#else
-register int ef = 0;			/* desired value of flags & ECHO */
-register int cf = CBRKON(CBRKMASK);	/* desired value of flags & CBREAK */
-register int change = 0;
-	flags.cbreak = ON;
-	flags.echo = OFF;
-	/* Should use (ECHO|CRMOD) here instead of ECHO */
-	if((curttyb.echoflgs & ECHO) != ef){
-		curttyb.echoflgs &= ~ECHO;
-/*		curttyb.echoflgs |= ef;					*/
-		change++;
-	}
-	if((curttyb.cbrkflgs & CBRKMASK) != cf){
-		curttyb.cbrkflgs &= ~CBRKMASK;
-		curttyb.cbrkflgs |= cf;
-#ifdef USG
-		/* be satisfied with one character; no timeout */
-		curttyb.c_cc[VMIN] = 1;		/* was VEOF */
-		curttyb.c_cc[VTIME] = 0;	/* was VEOL */
-#endif USG
-		change++;
-	}
-	if(change){
-		setctty();
-	}
-#endif MSDOS
 	start_screen();
 }
 
@@ -301,27 +196,13 @@ parse()
 
 char
 readchar() {
-	register int sym;
+	char sym;
 
 	(void) fflush(stdout);
-	if((sym = getchar()) == EOF)
-#ifdef NR_OF_EOFS
-	{ /*
-	   * Some SYSV systems seem to return EOFs for various reasons
-	   * (?like when one hits break or for interrupted systemcalls?),
-	   * and we must see several before we quit.
-	   */
-		register int cnt = NR_OF_EOFS;
-		while (cnt--) {
-		    clearerr(stdin);	/* omit if clearerr is undefined */
-		    if((sym = getchar()) != EOF) goto noteof;
-		}
+
+	if((sym = getch()) == EOF) //^Z or -1
 		end_of_input();
-	     noteof:	;
-	}
-#else
-		end_of_input();
-#endif NR_OF_EOFS
+
 	if(flags.toplin == 1)
 		flags.toplin = 2;
 	return((char) sym);
