@@ -6,7 +6,7 @@
 #include <signal.h>
 #define	Sprintf	(void) sprintf
 extern char plname[], pl_character[];
-extern char *itoa(), *ordin(), *eos();
+extern char *hitoa(), *ordin(), *eos();
 
 xchar maxdlevel = 1;
 
@@ -31,12 +31,16 @@ int done_hup;
 done_intr(){
 	done_stopprint++;
 	(void) signal(SIGINT, SIG_IGN);
+#ifdef UNIX_SIGNALS
 	(void) signal(SIGQUIT, SIG_IGN);
+#endif
 }
 
 done_hangup(){
 	done_hup++;
+#ifdef UNIX_SIGNALS
 	(void) signal(SIGHUP, SIG_IGN);
+#endif
 	done_intr();
 }
 
@@ -77,8 +81,10 @@ register char *st1;
 	}
 #endif WIZARD
 	(void) signal(SIGINT, done_intr);
+#ifdef UNIX_SIGNALS
 	(void) signal(SIGQUIT, done_intr);
 	(void) signal(SIGHUP, done_hangup);
+#endif
 	if(*st1 == 'q' && u.uhp < 1){
 		st1 = "died";
 		killer = "quit while already on Charon's boat";
@@ -431,7 +437,7 @@ char linebuf[BUFSZ];
 	  register char *bp = eos(linebuf);
 	  char hpbuf[10];
 	  int hppos;
-	  Sprintf(hpbuf, (t1->hp > 0) ? itoa(t1->hp) : "-");
+	  Sprintf(hpbuf, (t1->hp > 0) ? hitoa(t1->hp) : "-");
 	  hppos = COLNO - 7 - strlen(hpbuf);
 	  if(bp <= linebuf + hppos) {
 	    while(bp < linebuf + hppos) *bp++ = ' ';
@@ -454,7 +460,7 @@ char linebuf[BUFSZ];
 }
 
 char *
-itoa(a) int a; {
+hitoa(a) int a; {
 static char buf[12];
 	Sprintf(buf,"%d",a);
 	return(buf);
@@ -469,7 +475,9 @@ register int d = n%10;
 
 clearlocks(){
 register x;
+#ifdef UNIX_SIGNALS
 	(void) signal(SIGHUP,SIG_IGN);
+#endif
 	for(x = maxdlevel; x >= 0; x--) {
 		glo(x);
 		(void) unlink(lock);	/* not all levels need be present */

@@ -48,7 +48,7 @@ register char *sp;
 }
 
 char line[LINSZ], *lp = line, *lp0 = line, *lpe = line;
-int eof;
+int heof;
 
 readline(){
 register int n = read(fd, lp0, (line+LINSZ)-lp0);
@@ -56,7 +56,7 @@ register int n = read(fd, lp0, (line+LINSZ)-lp0);
 		printf("Input error.\n");
 		exit(1);
 	}
-	if(n == 0) eof++;
+	if(n == 0) heof++;
 	lpe = lp0+n;
 }
 
@@ -73,7 +73,7 @@ skipuntil(s) char *s; {
 register char *sp0, *sp1;
 loop:
 	while(*s != nextchar())
-		if(eof) {
+		if(heof) {
 			printf("Cannot skipuntil %s\n", s);
 			exit(1);
 		}

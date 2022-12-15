@@ -153,7 +153,10 @@ veryold(fd) {
 	if(buf.st_size != sizeof(int)) return(0);	/* not an xlock file */
 	(void) time(&date);
 	if(date - buf.st_mtime < 3L*24L*60L*60L) {	/* recent */
+#if 0
+should be in stdlib?! / stderr
 		extern int errno;
+#endif
 		int lockedpid;	/* should be the same size as hackpid */
 
 		if(read(fd, (char *)&lockedpid, sizeof(lockedpid)) !=
@@ -182,7 +185,12 @@ getlock()
 #ifdef MULTIUSER_LOCK
 	return;
 #else
+#if 0
 	extern int errno, hackpid, locknum;
+	again stdlib/stderr
+#else
+	extern int hackpid, locknum;
+#endif
 	register int i = 0, fd;
 
 	(void) fflush(stdout);

@@ -33,12 +33,12 @@ boolean vis;
 			hit ? "hits" : "misses");
 		pline("%s %s.", buf, monnam(mdef));
 	} else {
-		boolean far = (dist(magr->mx, magr->my) > 15);
-		if(far != far_noise || moves-noisetime > 10) {
-			far_noise = far;
+		boolean isfar = (dist(magr->mx, magr->my) > 15);
+		if(isfar != far_noise || moves-noisetime > 10) {
+			far_noise = isfar;
 			noisetime = moves;
 			pline("You hear some noises%s.",
-				far ? " in the distance" : "");
+				isfar ? " in the distance" : "");
 		}
 	}
 	if(hit){

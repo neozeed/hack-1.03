@@ -4,7 +4,7 @@
 #ifndef CONFIG	/* make sure the compiler doesnt see the typedefs twice */
 
 #define	CONFIG
-#define	UNIX		/* delete if no fork(), exec() available */
+/*#define	UNIX		/* delete if no fork(), exec() available */
 /*#define	CHDIR		/* delete if no chdir() available */
 
 /*
@@ -26,7 +26,7 @@
 /* #define STUPID */	/* avoid some complicated expressions if
 			   your C compiler chokes on them */
 /* #define PYRAMID_BUG */	/* avoid a bug on the Pyramid */
-/* #define NOWAITINCLUDE */	/* neither <wait.h> nor <sys/wait.h> exists */
+#define NOWAITINCLUDE */	/* neither <wait.h> nor <sys/wait.h> exists */
 
 #define WIZARD  "aeb"	/* the person allowed to use the -D option */
 #define RECORD	"record"/* the file containing the list of topscorers */

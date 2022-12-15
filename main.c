@@ -115,8 +115,9 @@ char *argv[];
 	cls();
 	u.uhp = 1;	/* prevent RIP on early quits */
 	u.ux = FAR;	/* prevent nscr() */
+#ifdef UNIX_SIGNALS
 	(void) signal(SIGHUP, hangup);
-
+#endif
 	/*
 	 * Find the creation date of this game,
 	 * so as to avoid restoring outdated savefiles.
@@ -198,7 +199,9 @@ char *argv[];
 		 * check for multiple games under the same name
 		 * (if !locknum) or check max nr of players (otherwise)
 		 */
+#ifdef UNIX_SIGNALS
 		(void) signal(SIGQUIT,SIG_IGN);
+#endif
 		(void) signal(SIGINT,SIG_IGN);
 		if(!locknum)
 			(void) strcpy(lock,plname);

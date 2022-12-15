@@ -33,8 +33,9 @@ hangup(){
 dosave0(hu) int hu; {
 	register fd, ofd;
 	int tmp;		/* not register ! */
-
+#ifdef UNIX_SIGNALS
 	(void) signal(SIGHUP, SIG_IGN);
+#endif
 	(void) signal(SIGINT, SIG_IGN);
 	if((fd = creat(SAVEF, FMASK)) < 0) {
 		if(!hu) pline("Cannot open save file. (Continue or Quit)");
