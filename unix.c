@@ -90,6 +90,7 @@ midnight()
 struct stat buf, hbuf;
 
 gethdate(name) char *name; {
+
 /* old version - for people short of space */
 /*
 /* register char *np;
@@ -109,6 +110,10 @@ gethdate(name) char *name; {
 
 register char *np, *path;
 char filename[MAXPATHLEN+1];
+//should comment out caller
+#ifdef MSDOS
+return 1;
+#endif
 	if (index(name, '/') != NULL || (path = getenv("PATH")) == NULL)
 		path = "";
 
@@ -182,7 +187,7 @@ should be in stdlib?! / stderr
 
 getlock()
 {
-#ifdef MULTIUSER_LOCK
+#ifndef MULTIUSER_LOCK
 	return;
 #else
 #if 0

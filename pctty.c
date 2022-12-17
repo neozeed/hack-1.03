@@ -125,6 +125,8 @@ register char *s;
 	putstr("Hit ");
 	putstr(flags.cbreak ? "space" : "return");
 	putstr(" to continue: ");
+//JASON
+putstr("standoutend is broken");
 	if(flags.standout)
 		standoutend();
 	xwaitforspace(s);

@@ -19,7 +19,32 @@ static char PC = '\0';
 char *CD;		/* tested in pri.c: docorner() */
 int CO, LI;		/* used in pri.c and whatis.c */
 
+static char tgotobuf[20];
+#define tgoto(fmt, x, y)        (sprintf(tgotobuf, fmt, y+1, x+1), tgotobuf)
+
 startup()
+{
+        HO = "\033[H";
+        CL = "\033[2J";         /* the ANSI termcap */
+        CE = "";        //"\033[K";
+        UP = "\033[A";
+        CM = "\033[%d;%dH";     /* used with function tgoto() */
+        ND = "\033[C";
+        XD = "\033[B";
+        BC = "\033[D";
+        SO = "\033[7m";
+        SE = "\033[0m";
+        TI = "";
+        TE = "";
+        VS = "";
+        VE = "";
+
+
+        CD = "\033";
+        CO = COLNO;
+        LI = ROWNO;
+}
+Xstartup()
 {
 	register char *term;
 	register char *tptr;
@@ -91,86 +116,87 @@ end_screen()
 extern xchar curx, cury;
 
 curs(x, y)
-register int x, y;	/* not xchar: perhaps xchar is unsigned and
-			   curx-x would be unsigned as well */
+register int x, y;      /* not xchar: perhaps xchar is unsigned and
+                           curx-x would be unsigned as well */
 {
 
-	if (y == cury && x == curx)
-		return;
-	if(!ND && (curx != x || x <= 3)) {	/* Extremely primitive */
-		cmov(x, y);			/* bunker!wtm */
-		return;
-	}
-	if(abs(cury-y) <= 3 && abs(curx-x) <= 3)
-		nocmov(x, y);
-	else if((x <= 3 && abs(cury-y)<= 3) || (!CM && x<abs(curx-x))) {
-		(void) putchar('\r');
-		curx = 1;
-		nocmov(x, y);
-	} else if(!CM) {
-		nocmov(x, y);
-	} else
-		cmov(x, y);
+        if (y == cury && x == curx)
+                return;
+        if(!ND && (curx != x || x <= 3)) {      /* Extremely primitive */
+                cmov(x, y);                     /* bunker!wtm */
+                return;
+        }
+        if(abs(cury-y) <= 3 && abs(curx-x) <= 3)
+                nocmov(x, y);
+        else if((x <= 3 && abs(cury-y)<= 3) || (!CM && x<abs(curx-x))) {
+                (void) putchar('\r');
+                curx = 1;
+                nocmov(x, y);
+        } else if(!CM) {
+                nocmov(x, y);
+        } else
+                cmov(x, y);
 }
 
 nocmov(x, y)
 {
-	if (cury > y) {
-		if(UP) {
-			while (cury > y) {	/* Go up. */
-				xputs(UP);
-				cury--;
-			}
-		} else if(CM) {
-			cmov(x, y);
-		} else if(HO) {
-			home();
-			curs(x, y);
-		} /* else impossible("..."); */
-	} else if (cury < y) {
-		if(XD) {
-			while(cury < y) {
-				xputs(XD);
-				cury++;
-			}
-		} else if(CM) {
-			cmov(x, y);
-		} else {
-			while(cury < y) {
-				xputc('\n');
-				curx = 1;
-				cury++;
-			}
-		}
-	}
-	if (curx < x) {		/* Go to the right. */
-		if(!ND) cmov(x, y); else	/* bah */
-			/* should instead print what is there already */
-		while (curx < x) {
-			xputs(ND);
-			curx++;
-		}
-	} else if (curx > x) {
-		while (curx > x) {	/* Go to the left. */
-			xputs(BC);
-			curx--;
-		}
-	}
+        if (cury > y) {
+                if(UP) {
+                        while (cury > y) {      /* Go up. */
+                                xputs(UP);
+                                cury--;
+                        }
+                } else if(CM) {
+                        cmov(x, y);
+                } else if(HO) {
+                        home();
+                        curs(x, y);
+                } /* else impossible("..."); */
+        } else if (cury < y) {
+                if(XD) {
+                        while(cury < y) {
+                                xputs(XD);
+                                cury++;
+                        }
+                } else if(CM) {
+                        cmov(x, y);
+                } else {
+                        while(cury < y) {
+                                xputc('\n');
+                                curx = 1;
+                                cury++;
+                        }
+                }
+        }
+        if (curx < x) {         /* Go to the right. */
+                if(!ND) cmov(x, y); else        /* bah */
+                        /* should instead print what is there already */
+                while (curx < x) {
+                        xputs(ND);
+                        curx++;
+                }
+        } else if (curx > x) {
+                while (curx > x) {      /* Go to the left. */
+                        xputs(BC);
+                        curx--;
+                }
+        }
 }
 
 cmov(x, y)
 register x, y;
 {
-	//xputs(tgoto(CM, x-1, y-1));
-	char cmovs[10];
-	sprintf(cmovs,"%c[%d;%df",0x1B,y-1,x-1);
-	xputs(cmovs);
-	cury = y;
-	curx = x;
+        xputs(tgoto(CM, x-1, y-1));
+        cury = y;
+        curx = x;
 }
 
 xputc(c) char c; {
-	(void) fputc(c, stdout);
+        (void) fputc(c, stdout);
+}
+
+xputs(s) char *s; {
+        fputs(s, stdout);
 }
 
 
@@ -179,108 +205,91 @@ xputc(c) char c; {
 	putc is a putchar-like routine to which the characters are passed, one at a time.
 */
 
-xputs(s) char *s; {
-	tputs(s, 1, xputc);
-//puts(s);
-}
 
 cl_end() {
-	if(CE)
-		xputs(CE);
-	else {	/* no-CE fix - free after Harold Rynes */
-		/* this looks terrible, especially on a slow terminal
-		   but is better than nothing */
-		register cx = curx, cy = cury;
+        if(CE)
+                xputs(CE);
+        else {  /* no-CE fix - free after Harold Rynes */
+                /* this looks terrible, especially on a slow terminal
+                   but is better than nothing */
+                register cx = curx, cy = cury;
 
-		while(curx < COLNO) {
-			xputc(' ');
-			curx++;
-		}
-		curs(cx, cy);
-	}
+                while(curx < COLNO) {
+                        xputc(' ');
+                        curx++;
+                }
+                curs(cx, cy);
+        }
 }
 
 clear_screen() {
-	xputs(CL);
-	curx = cury = 1;
+        xputs(CL);
+        curx = cury = 1;
 }
 
 home()
 {
-	if(HO)
-		xputs(HO);
-	else if(CM)
-		xputs(tgoto(CM, 0, 0));
-	else
-		curs(1, 1);	/* using UP ... */
-	curx = cury = 1;
+        if(HO)
+                xputs(HO);
+        else if(CM)
+                xputs(tgoto(CM, 0, 0));
+        else
+                curs(1, 1);     /* using UP ... */
+        curx = cury = 1;
 }
 
 standoutbeg()
 {
-	if(SO)
-		xputs(SO);
+        if(SO) xputs(SO);
 }
 
 standoutend()
 {
-	if(SE)
-		xputs(SE);
+        if(SE) xputs(SE);
 }
 
 backsp()
 {
-	xputs(BC);
-	curx--;
+        xputs(BC);
+        curx--;
 }
 
 bell()
 {
-	(void) putchar('\007');		/* curx does not change */
-	(void) fflush(stdout);
+        (void) putchar('\007');         /* curx does not change */
+        (void) fflush(stdout);
 }
 
-static short tmspc10[] = {		/* from termcap */
-	0, 2000, 1333, 909, 743, 666, 500, 333, 166, 83, 55, 41, 20, 10, 5
+static short tmspc10[] = {              /* from termcap */
+        0, 2000, 1333, 909, 743, 666, 500, 333, 166, 83, 55, 41, 20, 10, 5
 };
 
 delay_output() {
-	/* delay 50 ms - could also use a 'nap'-system call */
-	/* BUG: if the padding character is visible, as it is on the 5620
-	   then this looks terrible. */
-	if(!flags.nonull)
-		tputs("50", 1, xputc);
+        /* delay 50 ms - could also use a 'nap'-system call */
+        /* BUG: if the padding character is visible, as it is on the 5620
+           then this looks terrible. */
 
-		/* cbosgd!cbcephus!pds for SYS V R2 */
-		/* is this terminfo, or what? */
-		/* tputs("$<50>", 1, xputc); */
-
-	else if(ospeed > 0 || ospeed < SIZE(tmspc10)) if(CM) {
-		/* delay by sending cm(here) an appropriate number of times */
-		register int cmlen = strlen(tgoto(CM, curx-1, cury-1));
-		register int i = 500 + tmspc10[ospeed]/2;
-
-		while(i > 0) {
-			cmov(curx, cury);
-			i -= cmlen*tmspc10[ospeed];
-		}
-	}
+        /* simulate the delay with "cursor here" 5 times*/
+        register i;
+        for (i = 0; i < 5; i++)
+                cmov(curx, cury);
 }
 
-cl_eos()			/* free after Robert Viduya */
-{				/* must only be called with curx = 1 */
+cl_eos()                        /* free after Robert Viduya */
+{                               /* must only be called with curx = 1 */
 
-	if(CD)
-		xputs(CD);
-	else {
-		register int cx = curx, cy = cury;
-		while(cury <= LI-2) {
-			cl_end();
-			xputc('\n');
-			curx = 1;
-			cury++;
-		}
-		cl_end();
-		curs(cx, cy);
-	}
+        if(CD)
+                xputs(CD);
+        else {
+                register int cx = curx, cy = cury;
+                while(cury <= LI-2) {
+                        cl_end();
+                        xputc('\n');
+                        curx = 1;
+                        cury++;
+                }
+                cl_end();
+                curs(cx, cy);
+        }
 }
+
