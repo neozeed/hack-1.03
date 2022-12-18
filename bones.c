@@ -8,7 +8,7 @@
 
 #ifdef MSDOS
 #include <fcntl.h>
-#endif"
+#endif
 extern char plname[PL_NSIZ];
 extern long somegold();
 extern struct monst *makemon();
