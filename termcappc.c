@@ -24,18 +24,32 @@ static char tgotobuf[20];
 
 startup()
 {
-        HO = "\033[H";
-        CL = "\033[2J";         /* the ANSI termcap */
-        CE = "";        //"\033[K";
-        UP = "\033[A";
-        CM = "\033[%d;%dH";     /* used with function tgoto() */
-        ND = "\033[C";
-        XD = "\033[B";
-        BC = "\033[D";
-        SO = "\033[7m";
-        SE = "\033[0m";
+         /* the ANSI termcap */
+        HO = "\033[H";		//	String to position cursor at upper left corner.
+        CL = "\033[2J";		//	String of commands to clear the entire screen and position the cursor at the upper left corner.
+        CE = "\033[K";		//	String of commands to clear from the cursor to the end of the current line.
+        UP = "\033[A";		//	up String to move the cursor vertically up one line.
+        CM = "\033[%d;%dH";   //	String of commands to position the cursor at line l, column c. Both parameters are origin-zero, and are defined
+					//	relative to the screen, not relative to display memory. All display terminals except a few very obsolete ones 
+					//	support `cm', so it is acceptable for an application program to refuse to operate on terminals lacking 'cm'.
+					  /* used with function tgoto() */
+        ND = "\033[C";		//	String to move the cursor right one column.
+        XD = "\033[B";		//	It seems that xd is no longer supported, and we should use
+     					//    a linefeed instead; unfortunately this requires resetting
+					//    CRMOD, and many output routines will have to be modified
+ 					//    slightly. Let's leave that till the next release. 
+        BC = "\033[D";		//	Very obsolete alternative name for the `le' capability.
+					//	le String to move the cursor left one column.
+					//	LE String to move cursor left n columns.
+        SO = "\033[7m";		//	String of commands to enter standout mode.
+        SE = "\033[0m";		//	String of commands to leave standout mode.
+#if 0
         TI = "";
         TE = "";
+#else
+	TI = "\033[0m\033[=7l";			//	term init
+	TE = "\033[0m\033[=7h";			//	term end
+#endif
         VS = "";
         VE = "";
 
@@ -43,57 +57,6 @@ startup()
         CD = "\033";
         CO = COLNO;
         LI = ROWNO;
-}
-Xstartup()
-{
-	register char *term;
-	register char *tptr;
-	char *tbufptr, *pc;
-
-	tptr = (char *) alloc(1024);
-
-/*
-mono|ANSI.SYS mono:\
-        :co#80:li#25:bs:pt:bl=^G:le=^H:do=^J:\
-        :cl=\E[H\E[2J:ce=\E[K:\
-        :ho=\E[H:cm=\E[%i%d;%dH:\
-        :up=\E[A:do=\E[B:le=\E[C:ri=\E[D:nd=\E[C:\
-        :ti=\E[0m\E[=7l:te=\E[0m\E[=7h:\
-        :so=\E[1m:se=\E[m:us=\E[4m:ue=\E[m:\
-        :mb=\E[5m:md=\E[1m:mr=\E[7m:me=\E[m:
-*/
-//#define \\E \\033
-	HO = "\033[H";				//	String to position cursor at upper left corner.
-	CO = 80;					//	Numeric value, the width of the screen in character positions. Even hardcopy terminals normally have a `co' capability.
-	LI = 25;					//	Numeric value, the height of the screen in lines.
-	if(CO < COLNO || LI < ROWNO+2)
-		setclipped();
-	CL = "\033[H\033[2J";			//	String of commands to clear the entire screen and position the cursor at the upper left corner.
-	CE = "\033[K";				//	String of commands to clear from the cursor to the end of the current line.
-
-	ND = "\033[C";				//	String to move the cursor right one column.
-	UP = "\033[A";				//	up String to move the cursor vertically up one line.
-							//	UP String to move cursor vertically up n lines.
-	BC = "";					//	Very obsolete alternative name for the `le' capability.
-							//	le String to move the cursor left one column.
-							//	LE String to move cursor left n columns.
-	XD = "";					//	It seems that xd is no longer supported, and we should use
-     							//    a linefeed instead; unfortunately this requires resetting
-							//    CRMOD, and many output routines will have to be modified
- 							//    slightly. Let's leave that till the next release. */
-	CM = "\033[0";				//	String of commands to position the cursor at line l, column c. Both parameters are origin-zero, and are defined
-							//	relative to the screen, not relative to display memory. All display terminals except a few very obsolete ones 
-							//	support `cm', so it is acceptable for an application program to refuse to operate on terminals lacking `cm'.
-	SO = "\033[1m";				//	String of commands to enter standout mode.
-	SE = "\033[m";				//	String of commands to leave standout mode.
-	SG = "";					//	Numeric capability, the width on the screen of the magic cookie. This capability is absent in terminals that 
-							//	record appearance modes character by character.
-	TI = "\033[0m\033[=7l";			//	term init
-	TE = "\033[0m\033[=7h";			//	term end
-	if(!SO || !SE || (SG > 0)) SO = SE = 0;
-	CD = "";					//	String to clear the line the cursor is on, and following lines.
-	set_whole_screen();		/* uses LI and CD */
-	free(tptr);
 }
 
 start_screen()
