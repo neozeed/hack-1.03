@@ -110,7 +110,7 @@ gethdate(name) char *name; {
 
 register char *np, *path;
 char filename[MAXPATHLEN+1];
-//should comment out caller
+/* should comment out caller */
 #ifdef MSDOS
 return 1;
 #endif

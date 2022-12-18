@@ -4,6 +4,7 @@
    arnold@ucsf-cgl, wcs@bo95b, cbcephus!pds and others. */
 
 #include <stdio.h>
+#include <conio.h>
 #include "hack.h"
 
 static char erase_char, kill_char;
@@ -125,7 +126,7 @@ register char *s;
 	putstr("Hit ");
 	putstr(flags.cbreak ? "space" : "return");
 	putstr(" to continue: ");
-//JASON
+/*	JASON	*/
 putstr("standoutend is broken");
 	if(flags.standout)
 		standoutend();
@@ -155,7 +156,7 @@ register int c;
 char *
 parse()
 {
-	static char inline[COLNO];
+	static char Hinline[COLNO];
 	register foo;
 
 	flags.move = 1;
@@ -177,23 +178,23 @@ parse()
 #endif DGK
 	if(multi) {
 		multi--;
-		save_cm = inline;
+		save_cm = Hinline;
 	}
-	inline[0] = foo;
-	inline[1] = 0;
+	Hinline[0] = foo;
+	Hinline[1] = 0;
 	if(foo == 'f' || foo == 'F'){
-		inline[1] = getchar();
+		Hinline[1] = getchar();
 #ifdef QUEST
-		if(inline[1] == foo) inline[2] = getchar(); else
+		if(Hinline[1] == foo) Hinline[2] = getchar(); else
 #endif QUEST
-		inline[2] = 0;
+		Hinline[2] = 0;
 	}
 	if(foo == 'm' || foo == 'M'){
-		inline[1] = getchar();
-		inline[2] = 0;
+		Hinline[1] = getchar();
+		Hinline[2] = 0;
 	}
 	clrlin();
-	return(inline);
+	return(Hinline);
 }
 
 char
@@ -202,7 +203,7 @@ readchar() {
 
 	(void) fflush(stdout);
 
-	if((sym = getch()) == EOF) //^Z or -1
+	if((sym = getch()) == EOF) /*	^Z or -1	*/
 		end_of_input();
 
 	if(flags.toplin == 1)
