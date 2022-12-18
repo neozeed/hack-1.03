@@ -8,7 +8,7 @@ TERMLIB =  -lcurses -ltermcap
 # make hack
 GAME = hack
 GAMEDIR = /usr/games/lib/hackdir
-CFLAGS = -g -O0 -DNOWAITINCLUDE -DMSDOS
+CFLAGS = -g -O -DNOWAITINCLUDE -DMSDOS
 HACKCSRC = decl.c\
 	apply.c bones.c c cmd.c do.c\
 	do_name.c do_wear.c dog.c eat.c end.c\
@@ -20,7 +20,7 @@ HACKCSRC = decl.c\
 	read.c rip.c rumors.c save.c\
 	search.c shk.c shknam.c steal.c\
 	termcap.c timeout.c topl.c\
-	track.c trap.c tty.c unix.c\
+	track.c trap.c pctty.c unix.c\
 	u_init.c vault.c\
 	wield.c wizard.c worm.c worn.c zap.c\
 	version.c rnd.c alloc.c
@@ -50,7 +50,7 @@ HOBJ = decl.o apply.o bones.o hack.o cmd.o do.o\
 	search.o shk.o shknam.o steal.o\
 	termcap.o timeout.o topl.o\
 	track.o trap.o\
-	tty.o unix.o u_init.o vault.o wield.o\
+	pctty.o unix.o u_init.o vault.o wield.o\
 	wizard.o worm.o worn.o zap.o\
 	version.o rnd.o alloc.o
 
