@@ -1,9 +1,13 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* hack.lev.c - version 1.0.3 */
 
+#include <stdio.h>
+#include <stdlib.h>
+#ifdef MSDOS
+#include <fcntl.h>
+#endif
 #include "hack.h"
 #include "mkroom.h"
-#include <stdio.h>
 extern struct monst *restmonchn();
 extern struct obj *restobjchn();
 extern struct obj *billobjs;
@@ -29,6 +33,10 @@ xchar lev;
 	register struct wseg *wtmp, *wtmp2;
 	register tmp;
 #endif NOWORM
+
+#ifdef MSDOS
+	setmode(fd,O_BINARY);
+#endif MSDOS
 
 	if(fd < 0) panic("Save on bad file!");	/* impossible */
 	if(lev >= 0 && lev <= MAXLEVEL)
@@ -163,6 +171,10 @@ xchar lev;
 	long omoves;
 	int hpid;
 	xchar dlvl;
+
+#ifdef MSDOS
+	setmode(fd,O_BINARY);
+#endif MSDOS
 
 	/* First some sanity checks */
 	mread(fd, (char *) &hpid, sizeof(hpid));

@@ -5,6 +5,10 @@
 #include <signal.h>
 #include "hack.h"
 
+#ifdef MSDOS
+#include <fcntl.h>
+#endif
+
 #ifdef QUEST
 #define	gamename	"quest"
 #else
@@ -239,8 +243,13 @@ char *argv[];
 	setftty();
 	(void) sprintf(SAVEF, "save/%d%s", getuid(), plname);
 	regularize(SAVEF+5);		/* avoid . or / in name */
+#ifdef MSDOS
+	if((fd = open(SAVEF,0|O_BINARY))  >= 0 &&
+	   (uptodate(fd) || unlink(SAVEF) == 666)) {
+#else
 	if((fd = open(SAVEF,0)) >= 0 &&
 	   (uptodate(fd) || unlink(SAVEF) == 666)) {
+#endif
 		(void) signal(SIGINT,done1);
 		pline("Restoring old save file...");
 		(void) fflush(stdout);

@@ -1,10 +1,16 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* hack.save.c - version 1.0.3 */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
 #include "hack.h"
+
+#ifdef MSDOS
+#include <fcntl.h>
+#endif
 extern char genocided[60];	/* defined in Decl.c */
 extern char fut_geno[60];	/* idem */
-#include <signal.h>
 
 extern char SAVEF[], nul[];
 extern char pl_character[PL_CSIZ];
@@ -37,7 +43,11 @@ dosave0(hu) int hu; {
 	(void) signal(SIGHUP, SIG_IGN);
 #endif
 	(void) signal(SIGINT, SIG_IGN);
+#ifdef MSDOS
+	if((fd = creat(SAVEF, FMASK|O_BINARY)) < 0) {
+#else
 	if((fd = creat(SAVEF, FMASK)) < 0) {
+#endif
 		if(!hu) pline("Cannot open save file. (Continue or Quit)");
 		(void) unlink(SAVEF);		/* ab@unido */
 		return(0);

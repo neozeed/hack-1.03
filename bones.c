@@ -1,7 +1,14 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* hack.bones.c - version 1.0.3 */
+/* bones.c - version 1.0.3 */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
 #include "hack.h"
+
+#ifdef MSDOS
+#include <fcntl.h>
+#endif"
 extern char plname[PL_NSIZ];
 extern long somegold();
 extern struct monst *makemon();
@@ -67,7 +74,11 @@ register struct monst *mtmp;
 			otmp->cursed = 1;    /* flag as gotten from a ghost */
 		}
 	}
+#ifdef MSDOS
+	if((fd = creat(bones, FMASK|O_BINARY)) < 0) return;
+#else
 	if((fd = creat(bones, FMASK)) < 0) return;
+#endif
 	savelev(fd,dlevel);
 	(void) close(fd);
 }
@@ -77,7 +88,11 @@ register fd,x,y,ok;
 	if(rn2(3)) return(0);	/* only once in three times do we find bones */
 	bones[6] = '0' + dlevel/10;
 	bones[7] = '0' + dlevel%10;
+#ifdef MSDOS
+	if((fd = open(bones, 0|O_BINARY)) < 0) return(0);
+#else
 	if((fd = open(bones, 0)) < 0) return(0);
+#endif
 	if((ok = uptodate(fd)) != 0){
 		getlev(fd, 0, dlevel);
 		for(x = 0; x < COLNO; x++) for(y = 0; y < ROWNO; y++)

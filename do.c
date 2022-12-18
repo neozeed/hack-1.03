@@ -1,8 +1,13 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* hack.do.c - version 1.0.3 */
+/* do.c - version 1.0.3 */
 
 /* Contains code for 'd', 'D' (drop), '>', '<' (up, down) and 't' (throw) */
 
+#include <stdio.h>
+#include <stdlib.h>
+#ifdef MSDOS
+#include <fcntl.h>
+#endif
 #include "hack.h"
 
 extern struct obj *splitobj(), *addinv();
@@ -125,7 +130,11 @@ register boolean at_stairs;
 	if(newlevel == dlevel) return;	      /* this can happen */
 
 	glo(dlevel);
+#ifdef MSDOS
+	fd = creat(lock, FMASK|O_BINARY);
+#else
 	fd = creat(lock, FMASK);
+#endif
 	if(fd < 0) {
 		/*
 		 * This is not quite impossible: e.g., we may have
