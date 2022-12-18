@@ -128,7 +128,7 @@ return 1;
 			(void) strcpy(filename + (np - path) + 1, name);
 		}
 		if (stat(filename, &hbuf) == 0)
-			return;
+			return 1;	/*guessing as there was nothing defined*/
 		if (*np == '\0')
 			break;
 		path = np + 1;

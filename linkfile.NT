@@ -3,6 +3,6 @@ engrave fight hack invent pcioctl lev main makemon +
 mhitu mklev mkmaze mkobj mkshop mon monst +
 o_init objnam options pager potion pri +
 read rip rumors save search shk shknam steal +
-termcappc timeout topl track trap pctty unix u_init +
+termpc timeout topl track trap pctty unix u_init +
 vault wield wizard worm worn zap version rnd alloc msdos
 hack;

@@ -140,7 +140,8 @@ register xx,yy;
 		at(x,y,let);
 		tc[cnt].x = x;
 		tc[cnt].y = y;
-		if(++cnt >= COLNO) panic("Tmp_at overflow?");
+		if(++cnt >= COLNO)
+		 panic("Tmp_at overflow?",0,0,0,0,0,0);	/*Make Watcom happy*/
 		levl[x][y].new = 0;	/* prevent pline-nscr erasing --- */
 	}
 }
