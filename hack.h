@@ -154,6 +154,14 @@ extern int multi;
 
 extern char lock[];
 
+/* Some C compilers have case insensitive linkers, so it causes lots of confusion */
+#define Monnam mmonnam
+#define Amonnam aamonnam
+#define Xmonnam xxmonnam
+#define Doname ddoname
+#define Tmp_at ttmp_at
+#define Poison ppoison
+
 
 #define DIST(x1,y1,x2,y2)       (((x1)-(x2))*((x1)-(x2)) + ((y1)-(y2))*((y1)-(y2)))
 
