@@ -34,7 +34,7 @@ xchar lev;
 	register tmp;
 #endif NOWORM
 
-#ifdef MSDOS
+#if defined(MSDOS) && !defined(QDOS)
 	setmode(fd,O_BINARY);
 #endif MSDOS
 
@@ -172,7 +172,7 @@ xchar lev;
 	int hpid;
 	xchar dlvl;
 
-#ifdef MSDOS
+#if defined(MSDOS) && !defined(QDOS)
 	setmode(fd,O_BINARY);
 #endif MSDOS
 

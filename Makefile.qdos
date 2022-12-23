@@ -10,7 +10,7 @@ GAME = hack
 GAMEDIR = /usr/games/lib/hackdir
 # -DMULTIUSER_LOCK for systems that can respect this old locking schema
 #
-CFLAGS = -DMSDOS
+CFLAGS = -DMSDOS -O2
 
 LIB1 = decl.o apply.o bones.o hack.o cmd.o do.o\
 	do_name.o do_wear.o dog.o eat.o end.o\
@@ -37,7 +37,7 @@ OBJ = $(LIB1) $(LIB2) $(LIB3) $(LIB4) $(LIB5)
 
 $(GAME): $(OBJ) main.o
 	@echo "Loading ..."
-	ld -o $(GAME) main.o $(OBJ) -lm -lgcc -lc -lgcc
+	ld -o $(GAME) main.o $(OBJ) -lgcc -lc -lvt -lgcc
 #	@$(CC) -o $(GAME) $(HOBJ) $(TERMLIB) 
 
 all:	$(GAME) lint

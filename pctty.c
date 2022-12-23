@@ -4,7 +4,9 @@
    arnold@ucsf-cgl, wcs@bo95b, cbcephus!pds and others. */
 
 #include <stdio.h>
+#ifndef QDOS
 #include <conio.h>
+#endif
 #include "hack.h"
 
 static char erase_char, kill_char;

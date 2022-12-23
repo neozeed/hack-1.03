@@ -161,6 +161,7 @@ extern char lock[];
 #define Doname ddoname
 #define Tmp_at ttmp_at
 #define Poison ppoison
+#define POISONOUS ppoisonous
 
 
 #define DIST(x1,y1,x2,y2)       (((x1)-(x2))*((x1)-(x2)) + ((y1)-(y2))*((y1)-(y2)))
