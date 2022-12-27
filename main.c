@@ -83,10 +83,18 @@ char *argv[];
 #endif CHDIR
 #ifdef QDOS
 //extern long (*_conwrite)(); 
+#ifdef QDOS
+//extern long (*_conwrite)(); 
 printf("QDOS!\n\n\n");
  __ANSICONF__.emulation = VT100; 
  __ANSICONF__.csi = 0; 
  _conwrite = ANSI_conwrite;
+rc=chdir(getenv("HACKDIR"));
+if(rc!=0){
+	printf("\n\n\nError trying to chdir to the HACKDIR\nDo you have the environment set?\n\n");
+	printf("\n10 TK2_EXT\n20 LRESPR win1_env_bin\n30 setenv \"HACKDIR=win1_\"\n40 EXEC_W\nwin1_hack\n\n");
+	printf("Note that it really is case sensitivie.\n");
+	exit(-1);}
 #endif
 
 
