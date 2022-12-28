@@ -21,6 +21,7 @@ int (*_cmdparams)()=NULL;
 long (*_cmdchannels)()=NULL;
 int (*_cmdwildcard)()=NULL;
 long (*_stackchannels)()=NULL;
+long _stack = 20L * 1024L;
 
 /* set up definition of CONsole Window */
 struct WINDOWDEF _condetails = {
