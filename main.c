@@ -82,8 +82,7 @@ char *argv[];
 #ifdef CHDIR
 	register char *dir;
 #endif CHDIR
-#ifdef QDOS
-//extern long (*_conwrite)(); 
+
 #ifdef QDOS
 //extern long (*_conwrite)(); 
 printf("QDOS!\n\n\n");
