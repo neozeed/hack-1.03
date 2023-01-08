@@ -143,7 +143,7 @@ struct monst *mtmp;
 		uball = (struct obj *) 0;	/* superfluous */
 	}
 	freeinv(otmp);
-	pline("%s stole %s.", named ? "She" : Monnam(mtmp), doname(otmp));
+	pline("%s stole %s.", named ? "She" : (char *)Monnam(mtmp), (char *)doname(otmp));
 	mpickobj(mtmp,otmp);
 	return((multi < 0) ? 0 : 1);
 }
