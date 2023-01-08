@@ -1,6 +1,12 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* makedefs.c - version 1.0.2 */
 
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 /* construct definitions of object constants */
 #define	DEF_FILE	"objects.h"
 #define	LINSZ	1000
@@ -9,7 +15,13 @@
 int fd;
 char string[STRSZ];
 
-main(){
+int getentry(void);
+int skipuntil(char *s); 
+char letter(char ch); 
+void capitalize(char *sp); 
+char digit(char ch); 
+
+int main(int argc, char **argv){
 register int index = 0;
 register int propct = 0;
 register char *sp;
@@ -50,7 +62,7 @@ register char *sp;
 char line[LINSZ], *lp = line, *lp0 = line, *lpe = line;
 int heof;
 
-readline(){
+void readline(){
 register int n = read(fd, lp0, (line+LINSZ)-lp0);
 	if(n < 0){
 		printf("Input error.\n");
@@ -69,7 +81,7 @@ nextchar(){
  return((lp == lpe) ? 0 : *lp++);
 }
 
-skipuntil(s) char *s; {
+int skipuntil(s) char *s; {
 register char *sp0, *sp1;
 loop:
 	while(*s != nextchar())
@@ -101,7 +113,7 @@ loop:
  goto loop;
 }
 
-getentry(){
+int getentry(){
 int inbraces = 0, inparens = 0, stringseen = 0, commaseen = 0;
 int prefix = 0;
 char ch;
@@ -203,15 +215,15 @@ char identif[NSZ], *ip;
 	}
 }
 
-capitalize(sp) register char *sp; {
+void capitalize(sp) register char *sp; {
 	if('a' <= *sp && *sp <= 'z') *sp += 'A'-'a';
 }
 
-letter(ch) register char ch; {
+char letter(char ch) {
 	return( ('a' <= ch && ch <= 'z') ||
 		('A' <= ch && ch <= 'Z') );
 }
 
-digit(ch) register char ch; {
+char digit(char ch) {
 	return( '0' <= ch && ch <= '9' );
 }
