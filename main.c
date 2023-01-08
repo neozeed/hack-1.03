@@ -84,6 +84,7 @@ char *argv[];
 #endif CHDIR
 
 #ifdef QDOS
+int rc;
 //extern long (*_conwrite)(); 
 printf("QDOS!\n\n\n");
  __ANSICONF__.emulation = VT100; 
