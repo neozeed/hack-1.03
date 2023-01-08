@@ -1,4 +1,10 @@
+HOST_CC=gcc
 CC=qcc
+ifeq ($(OS),Windows_NT)
+	RM="del /F"
+else
+	RM="rf -f"
+endif
 
 # on some systems the termcap library is in -ltermcap
 TERMLIB =
@@ -43,12 +49,14 @@ $(GAME): $(OBJ) main.o
 all:	$(GAME) lint
 	@echo "Done."
 
+makedefs:       makedefs.c
+	$(HOST_CC) -o makedefs makedefs.c
 
-
-
+onames.h:       makedefs objects.h
+	./makedefs > onames.h
 
 clean:
-	del /F $(OBJ) $(LIBS) lib?.bak makedefs.x onames.h h hack.x main.o
+	-$(RM) $(OBJ) $(LIBS) lib?.bak makedefs.x onames.h h hack.x main.o
 
 
 
