@@ -5,8 +5,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
+/*not even sure if we even need unistd.h*/
+#ifndef _MSC_VER
+#include <unistd.h>
+#endif
 /* construct definitions of object constants */
 #define	DEF_FILE	"objects.h"
 #define	LINSZ	1000
