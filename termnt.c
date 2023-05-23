@@ -1,8 +1,13 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* hack.termcap.c - version 1.0.3 */
 
-#include <stdio.h>
+#if _MSC_VER < 900
+/*	not sure why Microsoft C 8 is having issues like this...	*/
+#define __export
+#define __huge
+#endif
 #include <windows.h>
+#include <stdio.h>
 HANDLE hConsoleOut;
 HANDLE hConsoleIn;
 
