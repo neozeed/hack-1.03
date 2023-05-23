@@ -1,8 +1,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* hack.termcap.c - version 1.0.3 */
 
-#if _MSC_VER < 900
-/*	not sure why Microsoft C 8 is having issues like this...	*/
+#if _MSC_VER < 1100
 #define __export
 #define __huge
 #endif
@@ -71,6 +70,9 @@ SetConsoleTitle("Hack 1.03");
         CD = "";	//"\033";
         CO = COLNO;
         LI = ROWNO;
+
+/*NT*/
+
 }
 
 start_screen()
@@ -228,7 +230,8 @@ home()
                 xputs(tgoto(CM, 0, 0));
         else
 #endif
-                curs(1, 1);     /* using UP ... */
+//                curs(1, 1);     /* using UP ... */
+                curs(0, 0);     /* using UP ... */
         curx = cury = 1;
 }
 
@@ -284,4 +287,3 @@ cl_eos()                        /* free after Robert Viduya */
                 curs(cx, cy);
         }
 }
-

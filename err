@@ -1,0 +1,37 @@
+	cl -DREGBUG -DLINT_ARGS -Ox -Gs /c pcioctl.c
+pcioctl.c
+pcioctl.c(19) : warning C4067: unexpected characters following '#endif' directive - newline expected
+	cl -DREGBUG -DLINT_ARGS -Ox -Gs /c o_init.c
+o_init.c
+config.h(135) : warning C4067: unexpected characters following '#endif' directive - newline expected
+	cl -DREGBUG -DLINT_ARGS -Ox -Gs /c options.c
+options.c
+config.h(135) : warning C4067: unexpected characters following '#endif' directive - newline expected
+hack.h(72) : warning C4067: unexpected characters following '#endif' directive - newline expected
+hack.h(84) : warning C4067: unexpected characters following '#endif' directive - newline expected
+options.c(42) : warning C4033: 'parseoptions' must return a value
+options.c(51) : warning C4033: 'parseoptions' must return a value
+options.c(56) : warning C4033: 'parseoptions' must return a value
+options.c(61) : warning C4033: 'parseoptions' must return a value
+options.c(66) : warning C4033: 'parseoptions' must return a value
+options.c(72) : warning C4033: 'parseoptions' must return a value
+options.c(77) : warning C4033: 'parseoptions' must return a value
+options.c(85) : warning C4033: 'parseoptions' must return a value
+options.c(90) : warning C4033: 'parseoptions' must return a value
+options.c(94) : warning C4033: 'parseoptions' must return a value
+options.c(102) : warning C4033: 'parseoptions' must return a value
+options.c(107) : warning C4033: 'parseoptions' must return a value
+options.c(141) : warning C4033: 'parseoptions' must return a value
+options.c(160) : warning C4033: 'parseoptions' must return a value
+options.c(164) : warning C4033: 'parseoptions' must return a value
+	cl -DREGBUG -DLINT_ARGS -Ox -Gs /c rumors.c
+rumors.c
+hack.h(72) : warning C4067: unexpected characters following '#endif' directive - newline expected
+hack.h(84) : warning C4067: unexpected characters following '#endif' directive - newline expected
+rumors.c(34) : warning C4033: 'outline' must return a value
+rumors.c(44) : warning C4033: 'outrumor' must return a value
+	cl -DREGBUG -DLINT_ARGS -Ox -Gs /c termnt.c
+termnt.c
+config.h(120) : error C2371: 'boolean' : redefinition; different basic types
+termnt.c(90) : warning C4033: 'curs' must return a value
+termnt.c(93) : warning C4033: 'curs' must return a value

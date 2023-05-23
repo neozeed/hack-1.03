@@ -111,7 +111,7 @@ gethdate(name) char *name; {
 register char *np, *path;
 char filename[MAXPATHLEN+1];
 /* should comment out caller */
-#ifdef MSDOS
+#if defined(MSDOS) || defined (_WIN32)
 return 1;
 #endif
 	if (index(name, '/') != NULL || (path = getenv("PATH")) == NULL)
