@@ -1,0 +1,5 @@
+ NAME HELLO WINDOWCOMPAT ; module name
+ PROTMODE                ; protected mode only
+ DATA PRELOAD READWRITE
+ CODE PRELOAD
+ STACKSIZE 4000
