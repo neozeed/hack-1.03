@@ -1,289 +1,315 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* hack.termcap.c - version 1.0.3 */
+/*
+ * Native Win32 console backend.
+ *
+ * Hack's screen bookkeeping is 1-based: curx == 1, cury == 1 is the
+ * upper-left cell.  Win32 console coordinates are 0-based, so keep the
+ * conversion in nt_coord() and do not leak ANSI/VT escape sequences into
+ * the rest of the game.
+ */
 
 #if _MSC_VER < 1100
 #define __export
 #define __huge
 #endif
+
 #include <windows.h>
 #include <stdio.h>
+
+#include "config.h"     /* for ROWNO and COLNO */
+#include "flag.h"       /* for flags.nonull */
+
 HANDLE hConsoleOut;
 HANDLE hConsoleIn;
 
-#include "config.h"	/* for ROWNO and COLNO */
-#include "flag.h"	/* for flags.nonull */
-extern char *tgetstr(), *tgoto(), *getenv();
-extern long *alloc();
+char *CD;                /* tested in pri.c: docorner() */
+int CO, LI;              /* used in pri.c and pager.c */
 
-#ifndef lint
-extern			/* it is defined in libtermlib (libtermcap) */
-#endif lint
-	short ospeed;		/* terminal baudrate; used by tputs */
-static char tbuf[512];
-static char *HO, *CL, *CE, *UP, *CM, *ND, *XD, *BC, *SO, *SE, *TI, *TE;
-static char *VS, *VE;
-static int SG;
-static char PC = '\0';
-char *CD;		/* tested in pri.c: docorner() */
-int CO, LI;		/* used in pri.c and whatis.c */
+extern xchar curx, cury;
 
-static char tgotobuf[20];
-#define tgoto(fmt, x, y)        (sprintf(tgotobuf, fmt, y+1, x+1), tgotobuf)
+static int nt_console_ok = 0;
+static COORD nt_origin;
+static WORD nt_normal_attr;
+static WORD nt_standout_attr;
+static CONSOLE_CURSOR_INFO nt_saved_cursor;
+static int nt_have_saved_cursor = 0;
+
+/*
+ * Translate Hack's 1-based logical screen coordinates into Win32 console
+ * buffer coordinates.  The logical screen is anchored to the visible
+ * console window that was present at startup, rather than blindly assuming
+ * that the window starts at buffer row zero.
+ */
+static COORD
+nt_coord(x, y)
+int x, y;
+{
+        COORD p;
+
+        if(x < 1) x = 1;
+        if(y < 1) y = 1;
+
+        p.X = (SHORT)(nt_origin.X + x - 1);
+        p.Y = (SHORT)(nt_origin.Y + y - 1);
+        return p;
+}
+
+static void
+nt_flush()
+{
+        (void) fflush(stdout);
+}
+
+/* Fill part of one logical screen line without disturbing the cursor. */
+static void
+nt_clear_line(y, first_col)
+int y, first_col;
+{
+        COORD p;
+        DWORD count, done;
+
+        if(!nt_console_ok)
+                return;
+        if(y < 1 || y > LI)
+                return;
+        if(first_col < 1)
+                first_col = 1;
+        if(first_col > CO)
+                return;
+
+        p = nt_coord(first_col, y);
+        count = (DWORD)(CO - first_col + 1);
+        done = 0;
+        (void) FillConsoleOutputCharacterA(hConsoleOut, ' ', count, p, &done);
+        done = 0;
+        (void) FillConsoleOutputAttribute(hConsoleOut, nt_normal_attr,
+                                          count, p, &done);
+}
 
 startup()
 {
-hConsoleOut = GetStdHandle(STD_OUTPUT_HANDLE);
-hConsoleIn  = GetStdHandle(STD_INPUT_HANDLE);
-SetConsoleTitle("Hack 1.03");
+        CONSOLE_SCREEN_BUFFER_INFO info;
+        int width, height;
 
+        hConsoleOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        hConsoleIn  = GetStdHandle(STD_INPUT_HANDLE);
 
-         /* the ANSI termcap */
-        HO = "\033[H";		//	String to position cursor at upper left corner.
-        CL = "\033[2J";		//	String of commands to clear the entire screen and position the cursor at the upper left corner.
-        CE = "";		//"\033[K";		//	String of commands to clear from the cursor to the end of the current line.
-        UP = "\033[A";		//	up String to move the cursor vertically up one line.
-        CM = "\033[%d;%dH";   //	String of commands to position the cursor at line l, column c. Both parameters are origin-zero, and are defined
-					//	relative to the screen, not relative to display memory. All display terminals except a few very obsolete ones 
-					//	support `cm', so it is acceptable for an application program to refuse to operate on terminals lacking 'cm'.
-					  /* used with function tgoto() */
-        ND = "\033[C";		//	String to move the cursor right one column.
-        XD = "\033[B";		//	It seems that xd is no longer supported, and we should use
-     					//    a linefeed instead; unfortunately this requires resetting
-					//    CRMOD, and many output routines will have to be modified
- 					//    slightly. Let's leave that till the next release. 
-        BC = "\033[D";		//	Very obsolete alternative name for the `le' capability.
-					//	le String to move the cursor left one column.
-					//	LE String to move cursor left n columns.
-        SO = "\033[7m";		//	String of commands to enter standout mode.
-        SE = "\033[0m";		//	String of commands to leave standout mode.
-#if 0
-        TI = "";
-        TE = "";
-#else
-	TI = "\033[0m\033[=7l";			//	term init
-	TE = "\033[0m\033[=7h";			//	term end
-#endif
-        VS = "";
-        VE = "";
+        nt_origin.X = 0;
+        nt_origin.Y = 0;
+        nt_normal_attr = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+        nt_standout_attr = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE;
 
-
-        CD = "";	//"\033";
         CO = COLNO;
-        LI = ROWNO;
+        LI = ROWNO + 2;
+        CD = "WIN32";          /* native clear-to-end-of-screen is available */
 
-/*NT*/
+        if(hConsoleOut != INVALID_HANDLE_VALUE && hConsoleOut != NULL &&
+           GetConsoleScreenBufferInfo(hConsoleOut, &info)) {
+                nt_console_ok = 1;
+                nt_origin.X = info.srWindow.Left;
+                nt_origin.Y = info.srWindow.Top;
+                nt_normal_attr = info.wAttributes;
 
+                /* Reverse foreground/background for standout text. */
+                nt_standout_attr = (WORD)
+                    ((nt_normal_attr & 0xFF00) |
+                     ((nt_normal_attr & 0x000F) << 4) |
+                     ((nt_normal_attr & 0x00F0) >> 4));
+
+                width = info.srWindow.Right - info.srWindow.Left + 1;
+                height = info.srWindow.Bottom - info.srWindow.Top + 1;
+
+                /* xchar coordinates only have a small positive range. */
+                if(width > 127) width = 127;
+                if(height > 127) height = 127;
+
+                CO = width;
+                LI = height;
+
+                if(GetConsoleCursorInfo(hConsoleOut, &nt_saved_cursor))
+                        nt_have_saved_cursor = 1;
+        }
+
+        (void) SetConsoleTitleA("Hack 1.03");
+
+        if(!nt_console_ok || CO < COLNO || LI < ROWNO + 2)
+                setclipped();
+
+        set_whole_screen();     /* uses LI and CD */
+        return(0);
 }
 
 start_screen()
 {
+        if(nt_console_ok) {
+                nt_flush();
+                (void) SetConsoleTextAttribute(hConsoleOut, nt_normal_attr);
+        }
+        return(0);
 }
 
 end_screen()
 {
+        if(nt_console_ok) {
+                nt_flush();
+                (void) SetConsoleTextAttribute(hConsoleOut, nt_normal_attr);
+                if(nt_have_saved_cursor)
+                        (void) SetConsoleCursorInfo(hConsoleOut, &nt_saved_cursor);
+        }
+        return(0);
 }
 
 /* Cursor movements */
-extern xchar curx, cury;
-
 curs(x, y)
-register int x, y;      /* not xchar: perhaps xchar is unsigned and
-                           curx-x would be unsigned as well */
+register int x, y;
 {
+        if(x < 1) x = 1;
+        if(y < 1) y = 1;
 
-        if (y == cury && x == curx)
-                return;
-        if(!ND && (curx != x || x <= 3)) {      /* Extremely primitive */
-                cmov(x, y);                     /* bunker!wtm */
-                return;
-        }
-        if(abs(cury-y) <= 3 && abs(curx-x) <= 3)
-                nocmov(x, y);	//no
-        else if((x <= 3 && abs(cury-y)<= 3) || (!CM && x<abs(curx-x))) {
-                (void) putchar('\r');
-                curx = 1;
-                nocmov(x, y);	//no
-        } else if(!CM) {
-                nocmov(x, y);	//no
-        } else
-                cmov(x, y);
+        if(y == cury && x == curx)
+                return(0);
+        cmov(x, y);
+        return(0);
 }
 
+/*
+ * A Win32 console has direct cursor addressing, so the old termcap relative
+ * movement optimisation is unnecessary.  Keep nocmov() because the rest of
+ * the historical source expects the symbol to exist.
+ */
 nocmov(x, y)
+int x, y;
 {
-        if (cury > y) {
-                if(UP) {
-                        while (cury > y) {      /* Go up. */
-                                xputs(UP);
-                                cury--;
-                        }
-                } else if(CM) {
-                        cmov(x, y);
-                } else if(HO) {
-                        home();
-                        curs(x, y);
-                } /* else impossible("..."); */
-        } else if (cury < y) {
-                if(XD) {
-                        while(cury < y) {
-                                xputs(XD);
-                                cury++;
-                        }
-                } else if(CM) {
-                        cmov(x, y);
-                } else {
-                        while(cury < y) {
-                                xputc('\n');
-                                curx = 1;
-                                cury++;
-                        }
-                }
-        }
-        if (curx < x) {         /* Go to the right. */
-                if(!ND) cmov(x, y); else        /* bah */
-                        /* should instead print what is there already */
-                while (curx < x) {
-                        xputs(ND);
-                        curx++;
-                }
-        } else if (curx > x) {
-                while (curx > x) {      /* Go to the left. */
-                        xputs(BC);
-                        curx--;
-                }
-        }
+        cmov(x, y);
+        return(0);
 }
 
 cmov(x, y)
-register x, y;
+register int x, y;
 {
-//       xputs(tgoto(CM, x-1, y-1));
-COORD Coords;
-Coords.X=x;
-Coords.Y=y;
-Coords.X--;
-Coords.Y--;
+        COORD p;
 
-SetConsoleCursorPosition(hConsoleOut,Coords);
-fflush(stdout);
-        cury = y;
-        curx = x;
+        if(x < 1) x = 1;
+        if(y < 1) y = 1;
+        if(x > CO) x = CO;
+        if(y > LI) y = LI;
+
+        nt_flush();
+        p = nt_coord(x, y);
+        if(nt_console_ok)
+                (void) SetConsoleCursorPosition(hConsoleOut, p);
+
+        cury = (xchar)y;
+        curx = (xchar)x;
+        return(0);
 }
 
-xputc(c) char c; {
+xputc(c)
+char c;
+{
         (void) fputc(c, stdout);
+        return(0);
 }
 
-xputs(s) char *s; {
-        fputs(s, stdout);
+xputs(s)
+char *s;
+{
+        (void) fputs(s, stdout);
+        return(0);
 }
 
+/* Clear from the logical cursor to the end of the current line. */
+cl_end()
+{
+        nt_flush();
+        nt_clear_line((int)cury, (int)curx);
+        return(0);
+}
 
-/*	The tputs routine applies padding information to the string str and outputs it. The str must be a terminfo string variable
-	or the return value from tparm, tgetstr, or tgoto. affcnt is the number of lines affected, or 1 if not applicable. 
-	putc is a putchar-like routine to which the characters are passed, one at a time.
-*/
+clear_screen()
+{
+        int y;
+        COORD p;
 
+        nt_flush();
 
-cl_end() {
-        if(CE)
-                xputs(CE);
-        else {  /* no-CE fix - free after Harold Rynes */
-                /* this looks terrible, especially on a slow terminal
-                   but is better than nothing */
-                register cx = curx, cy = cury;
+        if(nt_console_ok) {
+                for(y = 1; y <= LI; ++y)
+                        nt_clear_line(y, 1);
 
-                while(curx < COLNO) {
-                        xputc(' ');
-                        curx++;
-                }
-                curs(cx, cy);
+                p = nt_coord(1, 1);
+                (void) SetConsoleCursorPosition(hConsoleOut, p);
+                (void) SetConsoleTextAttribute(hConsoleOut, nt_normal_attr);
         }
-}
 
-clear_screen() {
-        char *buf;
-        int num;
-        COORD Coords;
-        CONSOLE_SCREEN_BUFFER_INFO screeninfo;
-
-        GetConsoleScreenBufferInfo(hConsoleOut,&screeninfo);
-        num=screeninfo.dwSize.X * screeninfo.dwSize.Y;
-        buf=malloc(num);
-        memset(buf,' ',num);
-        WriteConsole(hConsoleOut,buf,num,0,NULL);
-
-        Coords.X=0;
-        Coords.Y=0;
-        SetConsoleCursorPosition(hConsoleOut,Coords);
-
-        //xputs(CL);
         curx = cury = 1;
+        return(0);
 }
 
 home()
 {
-#if 0
-        if(HO)
-                xputs(HO);
-        else if(CM)
-                xputs(tgoto(CM, 0, 0));
-        else
-#endif
-//                curs(1, 1);     /* using UP ... */
-                curs(0, 0);     /* using UP ... */
-        curx = cury = 1;
+        cmov(1, 1);
+        return(0);
 }
 
 standoutbeg()
 {
+        if(nt_console_ok) {
+                nt_flush();
+                (void) SetConsoleTextAttribute(hConsoleOut, nt_standout_attr);
+        }
+        return(0);
 }
 
 standoutend()
 {
+        if(nt_console_ok) {
+                nt_flush();
+                (void) SetConsoleTextAttribute(hConsoleOut, nt_normal_attr);
+        }
+        return(0);
 }
 
 backsp()
 {
-        xputs(BC);
-        curx--;
+        if(curx > 1)
+                cmov((int)curx - 1, (int)cury);
+        return(0);
 }
 
 bell()
 {
-        (void) putchar('\007');         /* curx does not change */
-        (void) fflush(stdout);
+        nt_flush();
+        if(!Beep(750, 50))
+                (void) fputc('\007', stdout);
+        return(0);
 }
 
-static short tmspc10[] = {              /* from termcap */
-        0, 2000, 1333, 909, 743, 666, 500, 333, 166, 83, 55, 41, 20, 10, 5
-};
-
-delay_output() {
-        /* delay 50 ms - could also use a 'nap'-system call */
-        /* BUG: if the padding character is visible, as it is on the 5620
-           then this looks terrible. */
-
-        /* simulate the delay with "cursor here" 5 times*/
-        register i;
-        for (i = 0; i < 5; i++)
-                cmov(curx, cury);
+delay_output()
+{
+        nt_flush();
+        Sleep(50);
+        return(0);
 }
 
-cl_eos()                        /* free after Robert Viduya */
-{                               /* must only be called with curx = 1 */
+/* Clear from the logical cursor to the end of the visible Hack screen. */
+cl_eos()
+{
+        int y;
+        int save_x, save_y;
 
-        if(CD)
-                xputs(CD);
-        else {
-                register int cx = curx, cy = cury;
-                while(cury <= LI-2) {
-                        cl_end();
-                        xputc('\n');
-                        curx = 1;
-                        cury++;
-                }
-                cl_end();
-                curs(cx, cy);
-        }
+        nt_flush();
+
+        save_x = (int)curx;
+        save_y = (int)cury;
+
+        nt_clear_line(save_y, save_x);
+        for(y = save_y + 1; y <= LI; ++y)
+                nt_clear_line(y, 1);
+
+        /* FillConsoleOutput* does not move the cursor, but reassert it in
+           case a host console implementation behaves differently. */
+        cmov(save_x, save_y);
+        return(0);
 }
